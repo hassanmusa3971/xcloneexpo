@@ -1,13 +1,26 @@
-import express from 'express';
+import express from "express";
 import "dotenv/config";
+import { ENV } from "./config/env.js";
+import { connectDb } from "./config/db.js";
 const app = express();
 
+
 app.get("/", (req, res) => {
-    res.send("This is the backend server.");
-})
+  res.send("This is the backend server.");
+});
 
-app.listen(process.env.PORT, () => {
-    console.log(`Server is running on port ${process.env.PORT}`);
-})
+const startServer = async () => {
+  await connectDb();
+  app.listen(ENV.PORT, () => {
+    console.log(`Server is running on port ${ENV.PORT}`);
+  }).on("error", (error) => {
+    console.error("Error starting server:", error);
+    process.exit(1);
+  });
+};
 
+startServer().catch((error) => {
+  console.error("Error starting server:", error);
+  process.exit(1);
+});
 
