@@ -1,17 +1,58 @@
 import express from "express";
 import "dotenv/config";
+import cors from "cors"
+import mongoose from "mongoose"; // Import mongoose to access its disconnect method
+import { clerkMiddleware } from "@clerk/express"
 import { ENV } from "./config/env.js";
 import { connectDb } from "./config/db.js";
+import userRoutes from "./routes/user.route.js"
 const app = express();
 
+//MiddleWares
+app.use(cors())
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+app.use(clerkMiddleware())
 
+// Keep a reference to the server instance
+let server;
+
+//All routes
+app.use("/api/users", userRoutes)
 app.get("/", (req, res) => {
   res.send("This is the backend server.");
 });
 
+// Function to handle graceful shutdown
+const gracefulShutdown = async (signal) => {
+  console.log(`\nReceived signal ${signal}. Shutting down gracefully...`);
+  if (server) {
+    server.close(async () => {
+      console.log("HTTP server closed.");
+      try {
+        // Disconnect from MongoDB if connected
+        await mongoose.disconnect();
+        console.log("MongoDB disconnected.");
+        process.exit(0);
+      } catch (dbError) {
+        console.error("Error disconnecting from MongoDB:", dbError);
+        process.exit(1);
+      }
+    });
+  } else {
+    process.exit(0); // If server wasn't even started, just exit
+  }
+
+  // Force close after a timeout if connections don't close gracefully
+  setTimeout(() => {
+    console.error("Forcefully shutting down server due to timeout.");
+    process.exit(1);
+  }, 10000).unref(); // unref() allows the program to exit if this is the only active handle
+};
+
 const startServer = async () => {
   await connectDb();
-  app.listen(ENV.PORT, () => {
+  server = app.listen(ENV.PORT, () => {
     console.log(`Server is running on port ${ENV.PORT}`);
   }).on("error", (error) => {
     console.error("Error starting server:", error);
@@ -19,8 +60,12 @@ const startServer = async () => {
   });
 };
 
+// Start the server and catch any initial errors
 startServer().catch((error) => {
   console.error("Error starting server:", error);
   process.exit(1);
 });
 
+// Handle process termination signals
+process.on("SIGTERM", gracefulShutdown);
+process.on("SIGINT", gracefulShutdown);

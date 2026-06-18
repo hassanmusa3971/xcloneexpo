@@ -1,7 +1,7 @@
 import mongoose from "mongoose"
 
 const userSchema = new mongoose.Schema({
-    clerk:{
+    clerkId:{
         type: String,
         required: true,
         unique: true
