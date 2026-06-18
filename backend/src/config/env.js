@@ -38,15 +38,21 @@ if (isNaN(port)) {
   throw new Error(`Invalid PORT value: "${process.env.PORT}". PORT must be a valid number.`)
 }
 
-export const ENV = {
+export const ENV = Object.freeze({
     PORT: port,
     NODE_ENV: nodeEnv,
+    MONGO_URI: process.env.MONGO_URI,
+
+    // Clerk
     CLERK_PUBLISHABLE_KEY: process.env.CLERK_PUBLISHABLE_KEY,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-    MONGO_URI: process.env.MONGO_URI,
-    ARCJET_ENV: process.env.ARCJET_ENV,
+
+    // Arcjet
+    ARCJET_ENV: process.env.ARCJET_ENV || nodeEnv,
     ARCJET_KEY: process.env.ARCJET_KEY,
+
+    // Cloudinary
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET
-}
+})

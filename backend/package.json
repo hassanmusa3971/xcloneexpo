@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node --watch src/server.js",
+    "dev": "nodemon src/server.js",
     "start": "node src/server.js"
   },
   "keywords": [],
@@ -16,9 +16,15 @@
     "@arcjet/inspect": "^1.5.0",
     "@arcjet/node": "^1.5.0",
     "@clerk/express": "^2.1.26",
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mongoose": "^9.7.0"
+    "express-async-handler": "^1.2.0",
+    "mongoose": "^9.7.0",
+    "multer": "^2.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }
