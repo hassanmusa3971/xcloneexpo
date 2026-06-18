@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler"
 import User from "../models/user.model.js"
 import Notification from "../models/notification.model.js"
 import { clerkClient, getAuth } from "@clerk/express"
+import mongoose from "mongoose"
 
 
 export const getUserProfile = asyncHandler(async(req, res) => {
@@ -14,7 +15,12 @@ export const getUserProfile = asyncHandler(async(req, res) => {
 
 export const updateProfile = asyncHandler(async(req, res) => {
     const{ userId } = getAuth(req)
-    const user = await User.findOneAndUpdate({ clerkId: userId}, req.body, { new: true })
+    // const user = await User.findOneAndUpdate({ clerkId: userId}, req.body, { new: true })
+    const allowedFields = ["firstname", "lastname", "username", "bio", "profilePicture", "bannerImage", "location"]
+   const updates = Object.fromEntries(
+    Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
+   )
+   const user = await User.findOneAndUpdate({ clerkId: userId}, { $set: updates }, { new: true, runValidators: true})
     if(!user) return res.status(404).json({ error: "User not found"})
     res.status(200).json(user)
 
@@ -31,13 +37,18 @@ export const syncUser = asyncHandler(async (req, res) => {
 
   // create new user from Clerk data
   const clerkUser = await clerkClient.users.getUser(userId);
+  const primaryEmail = clerkUser.emailAddresses?.[0]?.emailAddress;
+  if (!primaryEmail) {
+    return res.status(400).json({ error: "Clerk user doesn't have a primary email address." });
+  }
 
+  const derivedName = primaryEmail.split("@")[0];
   const userData = {
     clerkId: userId,
-    email: clerkUser.emailAddresses[0].emailAddress,
-    firstName: clerkUser.firstName || "",
-    lastName: clerkUser.lastName || "",
-    username: clerkUser.emailAddresses[0].emailAddress.split("@")[0],
+    email: primaryEmail,
+    firstname: clerkUser.firstName || "",
+    lastname: clerkUser.lastName || "",
+    username: derivedName,
     profilePicture: clerkUser.imageUrl || "",
   };
 
@@ -58,20 +69,24 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
 export const followUser = asyncHandler(async (req, res) => {
   const { userId } = getAuth(req);
   const { targetUserId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
+   return res.status(400).json({ error: "Invalid target user id" });
+  }
 
-  if (userId === targetUserId) return res.status(400).json({ error: "You cannot follow yourself" });
-
+ 
   const currentUser = await User.findOne({ clerkId: userId });
   const targetUser = await User.findById(targetUserId);
 
-  if (!currentUser || !targetUser) return res.status(404).json({ error: "User not found" });
-
-  const isFollowing = currentUser.following.includes(targetUserId);
+    if (!currentUser || !targetUser) return res.status(404).json({ error: "User not found" });
+    if (currentUser._id.equals(targetUser._id)) {
+    return res.status(400).json({ error: "You cannot follow yourself" });
+    }
+    const isFollowing = currentUser.following.some((id) => id.equals(targetUser._id));
 
   if (isFollowing) {
     // unfollow
     await User.findByIdAndUpdate(currentUser._id, {
-      $pull: { following: targetUserId },
+      $pull: { following: targetUser._id },
     });
     await User.findByIdAndUpdate(targetUserId, {
       $pull: { followers: currentUser._id },
@@ -79,10 +94,10 @@ export const followUser = asyncHandler(async (req, res) => {
   } else {
     // follow
     await User.findByIdAndUpdate(currentUser._id, {
-      $push: { following: targetUserId },
+      $addToSet: { following: targetUser._id },
     });
     await User.findByIdAndUpdate(targetUserId, {
-      $push: { followers: currentUser._id },
+      $addToSet: { followers: currentUser._id },
     });
 
     // create notification

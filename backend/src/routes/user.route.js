@@ -11,7 +11,7 @@ userRoutes.get("/profile/:username", getUserProfile)
 userRoutes.post("/sync", protectRoute, syncUser)
 userRoutes.put("/profile", protectRoute, updateProfile)
 userRoutes.get("/me", protectRoute, getCurrentUser)
-userRoutes.post("/follow/:targetUserId", followUser)
+userRoutes.post("/follow/:targetUserId", protectRoute, followUser)
 
 
 
