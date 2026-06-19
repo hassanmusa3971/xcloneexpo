@@ -16,8 +16,8 @@ const app = express();
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use(clerkMiddleware())
 app.use(arcjetMiddleware)
+app.use(clerkMiddleware())
 
 // Keep a reference to the server instance
 let server;

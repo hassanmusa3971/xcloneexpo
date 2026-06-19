@@ -1,5 +1,5 @@
-import { request } from "express";
 import { aj } from "../config/arcjet.js";
+import { isSpoofedBot } from "@arcjet/inspect";
 
 export const arcjetMiddleware = async (req, res, next) => {
   try {
@@ -9,7 +9,7 @@ export const arcjetMiddleware = async (req, res, next) => {
     if (decision.isDenied()) {
       if (decision.reason.isRateLimit()) {
         return res.status(429).json({
-          error: "Too Many Request",
+          error: "Too Many Requests",
           message: "Rate limit exceeded. Please try again later",
         });
       } else if (decision.reason.isBot()) {
@@ -19,18 +19,14 @@ export const arcjetMiddleware = async (req, res, next) => {
         });
       } else {
         return res.status(403).json({
-          error: "Forbiden",
+          error: "Forbidden",
           message: "Access denied by security policy",
         });
       }
     }
 
     // check for spoofed bots
-    if (
-      decision.results.some(
-        (result) => result.reason.isBot() && result.reason.isSpoofed(),
-      )
-    ) {
+    if (decision.results.some(isSpoofedBot)) {
       return res.status(403).json({
         error: "Spoofed bot detected",
         message: "Malicious bot activity detected.",
@@ -40,6 +36,9 @@ export const arcjetMiddleware = async (req, res, next) => {
     next();
   } catch (error) {
     console.error("Arcjet middleware error:", error);
-    next();
+    return res.status(503).json({
+      error: "Service Unavailable",
+      message: "Arcjet protection temporarily unavailable",
+    });
   }
 };
