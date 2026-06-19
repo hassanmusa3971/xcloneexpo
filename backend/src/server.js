@@ -65,12 +65,14 @@ const gracefulShutdown = async (signal) => {
 
 const startServer = async () => {
   await connectDb();
-  server = app.listen(ENV.PORT, () => {
+  if(ENV.NODE_ENV !== "production"){
+     server = app.listen(ENV.PORT, () => {
     console.log(`Server is running on port ${ENV.PORT}`);
   }).on("error", (error) => {
     console.error("Error starting server:", error);
     process.exit(1);
   });
+  }
 };
 
 // Start the server and catch any initial errors
@@ -82,3 +84,6 @@ startServer().catch((error) => {
 // Handle process termination signals
 process.on("SIGTERM", gracefulShutdown);
 process.on("SIGINT", gracefulShutdown);
+
+
+export default app;
