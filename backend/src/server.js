@@ -7,6 +7,7 @@ import { ENV } from "./config/env.js";
 import { connectDb } from "./config/db.js";
 import userRoutes from "./routes/user.route.js"
 import postRoutes from "./routes/post.route.js"
+import commentRoutes from "./routes/comment.route.js";
 const app = express();
 
 //MiddleWares
@@ -24,6 +25,7 @@ app.get("/", (req, res) => {
 //All routes
 app.use("/api/users", userRoutes)
 app.use("/api/posts", postRoutes)
+app.use("/api/comments", commentRoutes)
 app.use((err, req, res, next) => {
   console.error("Unhandle error: ", err)
   if (res.headersSent) return next(err);
