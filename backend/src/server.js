@@ -6,6 +6,7 @@ import { clerkMiddleware } from "@clerk/express"
 import { ENV } from "./config/env.js";
 import { connectDb } from "./config/db.js";
 import userRoutes from "./routes/user.route.js"
+import postRoutes from "./routes/post.route.js"
 const app = express();
 
 //MiddleWares
@@ -17,11 +18,17 @@ app.use(clerkMiddleware())
 // Keep a reference to the server instance
 let server;
 
-//All routes
-app.use("/api/users", userRoutes)
 app.get("/", (req, res) => {
   res.send("This is the backend server.");
 });
+//All routes
+app.use("/api/users", userRoutes)
+app.use("/api/posts", postRoutes)
+app.use((err, req, res, next) => {
+  console.error("Unhandle error: ", err)
+  if (res.headersSent) return next(err);
+  return res.status(500).json({ message: "Internal server error"})
+})
 
 // Function to handle graceful shutdown
 const gracefulShutdown = async (signal) => {
