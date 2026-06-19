@@ -37,17 +37,24 @@ export const syncUser = asyncHandler(async (req, res) => {
 
   // create new user from Clerk data
   const clerkUser = await clerkClient.users.getUser(userId);
-  const primaryEmail = clerkUser.emailAddresses?.[0]?.emailAddress;
+  const primaryEmailObj = clerkUser.emailAddresses?.find(
+      (addr) => addr.id === clerkUser.primaryEmailAddressId
+    ) ?? clerkUser.emailAddresses?.[0];
+  const primaryEmail = primaryEmailObj?.emailAddress;
+
   if (!primaryEmail) {
     return res.status(400).json({ error: "Clerk user doesn't have a primary email address." });
   }
 
   const derivedName = primaryEmail.split("@")[0];
+  if (!clerkUser.firstName || !clerkUser.lastName) {
+    return res.status(400).json({ error: "Clerk user is missing required name fields." });
+   }
   const userData = {
     clerkId: userId,
     email: primaryEmail,
-    firstname: clerkUser.firstName || "",
-    lastname: clerkUser.lastName || "",
+    firstname: clerkUser.firstName,
+    lastname: clerkUser.lastName,
     username: derivedName,
     profilePicture: clerkUser.imageUrl || "",
   };
