@@ -8,10 +8,9 @@ import mongoose from "mongoose";
 
 export const getComments = asyncHandler(async (req, res) => {
   const { postId } = req.params;
-   if(mongoose.Types.ObjectId.isValid(postId)){
+   if(!mongoose.Types.ObjectId.isValid(postId)){
     return res.status(400).json({ error: "Invalid post id"})
   }
-
   const comments = await Comment.find({ post: postId })
     .sort({ createdAt: -1 })
     .populate("user", "username firstName lastName profilePicture");
@@ -24,7 +23,7 @@ export const createComment = asyncHandler(async (req, res) => {
   const { postId } = req.params;
   const { content } = req.body;
 
-  if(mongoose.Types.ObjectId.isValid(postId)){
+  if(!mongoose.Types.ObjectId.isValid(postId)){
     return res.status(400).json({ error: "Invalid post id"})
   }
 
@@ -65,8 +64,8 @@ export const createComment = asyncHandler(async (req, res) => {
 export const deleteComment = asyncHandler(async (req, res) => {
   const { userId } = getAuth(req);
   const { commentId } = req.params;
-   if(mongoose.Types.ObjectId.isValid(postId)){
-    return res.status(400).json({ error: "Invalid post id"})
+   if(!mongoose.Types.ObjectId.isValid(commentId)){
+    return res.status(400).json({ error: "Invalid comment id"})
   }
 
   const user = await User.findOne({ clerkId: userId });
