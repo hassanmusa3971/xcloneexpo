@@ -1,10 +1,11 @@
+import mongoose from "mongoose"
 import asyncHandler from "express-async-handler"
 import Post from "../models/post.model.js"
 import User from "../models/user.model.js"
 import Comment from "../models/comment.model.js"
 import Notification from "../models/notification.model.js"
 import cloudinary from "../config/cloudinary.js"
-
+import { getAuth } from "@clerk/express"
 export const getPosts = asyncHandler(async(req, res) => {
     const posts = await Post.find({}).sort({ createdAt: -1 }).populate("user", "firstname lastname username profilePicture")
     .populate({
@@ -19,6 +20,9 @@ export const getPosts = asyncHandler(async(req, res) => {
 
 export const getPost = asyncHandler(async (req, res) => {
   const { postId } = req.params
+  if (!mongoose.Types.ObjectId.isValid(postId)) {
+   return res.status(400).json({ error: "Invalid post id" });
+   }
   const post = await Post.findById(postId)
     .populate("user", "username firstname lastname profilePicture")
     .populate({

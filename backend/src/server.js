@@ -24,11 +24,11 @@ app.get("/", (req, res) => {
 //All routes
 app.use("/api/users", userRoutes)
 app.use("/api/posts", postRoutes)
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
   console.error("Unhandle error: ", err)
-  return res.status(500).json({ message: err.message || "Internal server error"})
+  if (res.headersSent) return next(err);
+  return res.status(500).json({ message: "Internal server error"})
 })
-
 
 // Function to handle graceful shutdown
 const gracefulShutdown = async (signal) => {

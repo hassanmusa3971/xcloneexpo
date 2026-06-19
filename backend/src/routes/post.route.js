@@ -7,8 +7,8 @@ const postRoutes = express.Router()
 
 //Public Routes
 postRoutes.get("/", getPosts)
-postRoutes.get("/:postId", getPost)
 postRoutes.get("/user/:username", getUserPosts)
+postRoutes.get("/:postId", getPost)
 
 //Private Routes
 postRoutes.post("/", protectRoute, upload.single("image"), createPost)
